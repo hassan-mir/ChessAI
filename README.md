@@ -2,6 +2,8 @@
 
 ChessAI is a fully functional chess game written in Python using the Pygame library. It is designed to provide a complete chess playing experience, including all the standard rules and moves. The primary goal of ChessAI is to serve as a platform for experimenting with and learning machine learning concepts by creating various AI opponents.
 
+![image](https://github.com/hassan-mir/ChessAI/assets/31957132/5d42f4ea-b6ff-4aaf-81d0-777e4bed8d5b)
+
 ## Features
 
 - **Full Chess Game Logic**: Implements all standard chess rules, including special moves like castling, en passant, and pawn promotion.
