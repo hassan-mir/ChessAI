@@ -3,6 +3,9 @@ import sys
 sys.path.append('D:\\Projects\\ChessAI')
 from game_logic.game import Game
 from game_logic.pieces import Pawn, Queen, Rook, King
+import os
+# Compute the path to the root directory (ChessAI/) and adds it to sys.path. Allows for running tests from root directory
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 class TestGame(unittest.TestCase):
     def setUp(self):

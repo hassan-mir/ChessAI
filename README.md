@@ -18,13 +18,22 @@ ChessAI is a fully functional chess game written in Python using the Pygame libr
    - `pieces.py`: Definitions for each type of chess piece and their movement rules.
    - `board.py`: Manages the chessboard and handles moves, including special moves and game state checks.
    - `game.py`: Represents the overall game state and controls the game flow.
-4. `test/test_game.py`: Contains unit tests for the game, ensuring the correctness of crucial game functionalities such as piece movements, special moves (e.g., castling, en passant, pawn promotion), and game state checks (e.g., check, checkmate, stalemate).
+4. - `ai`: Directory for implementing chess AI modules
+5. `test/test_game.py`: Contains unit tests for the game, ensuring the correctness of crucial game functionalities such as piece movements, special moves (e.g., castling, en passant, pawn promotion), and game state checks (e.g., check, checkmate, stalemate).
 
 ## How to Run
 
 1. Install Python and Pygame.
 2. Clone the repository or download the source files.
 3. Run `main.py` to start the game.
+
+## How to Run tests
+
+Run `python -m unittest discover -s tests` from the ChessAI root directory.
+
+## Current AI Implementation
+
+**Random Chess AI**: A basic AI opponent has been implemented that selects and plays random valid moves. This serves as a fundamental step towards more sophisticated AI strategies and provides a baseline opponent for testing and gameplay.
 
 ## Next Steps: AI Implementation
 

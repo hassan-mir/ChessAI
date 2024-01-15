@@ -32,6 +32,19 @@ class Game:
 
         return not self.game_over # Return True if game is not over
 
+    def get_available_moves(self):
+        """Returns a list of all available moves for a player."""
+        moves = []
+        for y in range(8):
+            for x in range(8):
+                piece = self.board.get_piece((y, x))
+                if piece and piece.color == self.current_turn:
+                    valid_moves = piece.get_valid_moves(self, self.current_turn)
+                    if valid_moves:
+                        for move in valid_moves:
+                            moves.append((piece.position, move))
+        return moves
+
     def opposite_color(self, color):
         return 'black' if color == 'white' else 'white'
 
