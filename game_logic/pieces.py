@@ -1,5 +1,5 @@
 class Piece:
-    def __init__(self, color, position):
+    def __init__(self, color, position, has_moved=False):
         self.color = color
         self.position = position # y,x
         self.has_moved = False
@@ -12,7 +12,7 @@ class Piece:
         valid_moves = []
         for row in range(8):
             for col in range(8):
-                if self.color is color and self.can_move_to((row, col), game.board) and game.board.is_move_valid(self.position, (row,col), self.color):
+                if self.color is color and self.can_move_to((row, col), game.board) and not game.board.is_in_check_after_move(self.position, (row,col), self.color):
                     valid_moves.append((row, col))
         return valid_moves
 
@@ -21,6 +21,9 @@ class Piece:
 
     def __str__(self):
         return f'{self.color[0]}{self.__class__.__name__[0]}'
+
+    def copy(self):
+        return self.__class__(self.color, self.position)
 
 # Define specific piece classes like Pawn, Rook, Knight, etc.
 # These classes should inherit from Piece and implement specific movement rules.
@@ -51,18 +54,21 @@ class Pawn(Piece):
                 return True
 
         # En passant capture logic
-        if abs(dx) == 1 and dy == forward:
             target_piece = board.get_piece(new_position)
-            if target_piece is None:
-                # Check if en passant is possible
-                beside_piece = board.get_piece((self.position[0],  new_position[1]))
-                if isinstance(beside_piece, Pawn) and beside_piece.color != self.color:
-                    last_move = board.last_move
-                    if last_move and last_move[0] == beside_piece:
-                        move_diff = abs(last_move[2][0] - last_move[1][0])
-                        if move_diff == 2:
-                            # En passant condition met
-                            return True
+            if board.is_en_passant_move(self, target_piece, new_position):
+                return True
+        # if abs(dx) == 1 and dy == forward:
+        #     target_piece = board.get_piece(new_position)
+        #     if target_piece is None:
+        #         # Check if en passant is possible
+        #         beside_piece = board.get_piece((self.position[0],  new_position[1]))
+        #         if isinstance(beside_piece, Pawn) and beside_piece.color != self.color:
+        #             last_move = (board.history[-1][2],board.history[-1][3]) if len(board.history) > 0 else None
+        #             if last_move and board.history[-1][0] == beside_piece:
+        #                 move_diff = abs(last_move[0][0] - last_move[1][0])
+        #                 if move_diff == 2:
+        #                     # En passant condition met
+        #                     return True
 
         return False
 

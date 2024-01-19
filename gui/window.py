@@ -1,17 +1,38 @@
 import pygame
+
+# Define the Button class
+class Button:
+    def __init__(self, x, y, width, height, text, color):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.text = text
+        self.color = color
+
+    def draw(self, window):
+        pygame.draw.rect(window, self.color, self.rect)
+        font = pygame.font.SysFont(None, 24)
+        text = font.render(self.text, True, (255, 255, 255))
+        text_rect = text.get_rect(center=self.rect.center)
+        window.blit(text, text_rect)
+
+
 import sys
 from utils.utilities import load_png_keep_aspect_ratio
 from game_logic.pieces import King
 
 class Window:
-    def __init__(self, width=1028, height=1028, white_perspective=False):
+    def __init__(self, width=1028, height=1088, white_perspective=False, isAI=False):
         self.width = width
         self.height = height
+        self.top_panel_height = 60
         self.block_size = self.width // 8  # Size of a single square
         self.piece_size = int(self.block_size * 0.8)  # Scale the piece size to 80% of the block size
         self.window = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
         pygame.display.set_caption("ChessAI")
         self.white_perspective = white_perspective
+        self.isAI = isAI
+
+        self.new_game_button = Button(10, 10, 100, 40, 'New Game', (200, 100, 100))
+        self.undo_button = Button(120, 10, 100, 40, 'Undo', (200, 100, 100))
 
         self.dragging_piece = None
         self.dragging_from_pos = None
@@ -40,6 +61,9 @@ class Window:
         # Draw the chess pieces
         self.draw_pieces(game)
 
+         # Draw the buttons
+        self.draw_buttons()
+
         # Highlight the available moves for the hovered piece
         if self.dragging_piece is not None:
             self.highlight_moves(game, self.dragging_piece)
@@ -53,6 +77,7 @@ class Window:
 
         # Update display
         pygame.display.flip()
+
 
     def update_sizes(self):
         # Get the current size of the display surface
@@ -75,6 +100,11 @@ class Window:
 
             # Reload resources if needed
             self.load_resources()
+
+    def draw_buttons(self):
+        # Draw buttons on the screen
+        self.new_game_button.draw(self.window)
+        self.undo_button.draw(self.window)
 
     def render_mate(self, game, text):
         font = pygame.font.SysFont(None, 72)
@@ -108,10 +138,10 @@ class Window:
             for col in range(8):
                 color = (255, 255, 255) if (row + col) % 2 == 0 else (100, 100, 100)
                 x_pos = col * self.block_size
-                y_pos = row * self.block_size
+                y_pos = row * self.block_size + self.top_panel_height
                 if self.white_perspective:
                     x_pos = (7 - col) * self.block_size
-                    y_pos = (7 - row) * self.block_size
+                    y_pos = (7 - row) * self.block_size + self.top_panel_height
                 pygame.draw.rect(self.window, color, (x_pos, y_pos, self.block_size, self.block_size))
 
     def draw_pieces(self, game):
@@ -119,7 +149,7 @@ class Window:
         for row in range(8):
             for col in range(8):
                 piece = game.board.get_piece((row, col))
-                if piece is not None and (self.dragging_piece is None or piece != self.dragging_piece):
+                if piece is not None and (self.dragging_piece_pos is None or piece != self.dragging_piece):
                     piece_key = str(piece)
                     piece_image = self.images[piece_key]
 
@@ -131,12 +161,22 @@ class Window:
                         col_view = col
                     # Calculate the position to center the piece image in the square
                     x_pos = col_view * self.block_size + (self.block_size - self.piece_size) // 2
-                    y_pos = row_view * self.block_size + (self.block_size - self.piece_size) // 2
+                    y_pos = row_view * self.block_size + (self.block_size - self.piece_size) // 2 + self.top_panel_height
                     self.window.blit(piece_image, (x_pos, y_pos))
 
                     # Highlight the king in red border if it's in check
-                    if isinstance(piece, King) and game.board.is_in_check(piece.color):
+                    if isinstance(piece, King) and piece.color is game.current_turn and game.is_current_player_in_check:
                         self.highlight_square((row_view, col_view), (255, 0, 0))
+
+        # Draw the dragging piece at the cursor position
+        if self.dragging_piece and self.dragging_piece_pos is not None:
+            piece_key = str(self.dragging_piece)
+            piece_image = self.images[piece_key]
+            # Center the piece on the cursor while dragging
+            x_pos, y_pos = self.dragging_piece_pos
+            x_pos -= self.piece_size // 2
+            y_pos -= self.piece_size // 2
+            self.window.blit(piece_image, (x_pos, y_pos))
 
     def highlight_moves(self, game, piece):
         # Draw a small light green circle on each available move for the piece
@@ -150,7 +190,7 @@ class Window:
                 move_row = 7 - move_row
                 move_col = 7 - move_col
             center_x = move_col * block_size + block_size // 2
-            center_y = move_row * block_size + block_size // 2
+            center_y = move_row * block_size + block_size // 2 + self.top_panel_height
             color = (0, 255, 0)  # Default color is light green
 
             if game.board.is_capture_move(piece, move):
@@ -167,21 +207,11 @@ class Window:
             # Blit (copy) this surface onto the window at the desired position
             self.window.blit(highlight_surface, (center_x - block_size // 2, center_y - block_size // 2))
 
-        # Draw the dragging piece at the cursor position
-        if self.dragging_piece and self.dragging_piece_pos is not None:
-            piece_key = str(self.dragging_piece)
-            piece_image = self.images[piece_key]
-            # Center the piece on the cursor while dragging
-            x_pos, y_pos = self.dragging_piece_pos
-            x_pos -= self.piece_size // 2
-            y_pos -= self.piece_size // 2
-            self.window.blit(piece_image, (x_pos, y_pos))
-
 
     def get_square_from_cursor(self, pos, game):
         x, y = pos
         #ensure always in bounds
-        row = max(0, min(y // self.block_size, 7))
+        row = max(0, min((y - self.top_panel_height) // self.block_size, 7))
         col = 7 - max(0, min(x // self.block_size, 7))
 
         #translate square to player perspective
@@ -234,9 +264,17 @@ class Window:
         self.dragging_piece = None
         self.dragging_piece_pos = None
 
+        # Check if any button is clicked
+        if self.new_game_button.rect.collidepoint(pos):
+            game.reset_game()
+        elif self.undo_button.rect.collidepoint(pos):
+            game.undo_move()
+            if(self.isAI):
+                game.undo_move()
+
     def highlight_square(self, position, color, border=5):
         """Highlights king when in check."""
         row, col = position
         x_pos = col * self.block_size
-        y_pos = row * self.block_size
+        y_pos = row * self.block_size + self.top_panel_height
         pygame.draw.rect(self.window, color, (x_pos, y_pos, self.block_size, self.block_size), border)
